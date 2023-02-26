@@ -23,8 +23,8 @@
 #define COLOR_GREEN 0x00A400FF
 #define COLOR_LIGHTGREEN 0x9ACD32AA
 #define COLOR_PURPLE 0xC2A2DAAA
-#define TEAM_BALLAS_COLOR 0xD900D3C8
-#define TEAM_AZTECAS_COLOR 0x01FCFFC8
+#define BALLAS_COLOR 0xD900D3C8
+#define AZTECAS_COLOR 0x01FCFFC8
 
 #define BackSlot 1
 
@@ -208,7 +208,7 @@ new Vehicle[30][VehicleInfo];
 new carslist = mS_INVALID_LISTID;
 new Carros[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-new Concesionario[][] = {
+new Dealership[][] = {
 	{549,5000,"Tampa"},
 	{478,6000,"Walton"},
 	{543,7000,"Sadler"},
@@ -1483,7 +1483,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 	    {
 	        SendClientMessage(playerid, COLOR_ORANGE,"[Police] /onduty /equipment /radio /megaphone /open /close /rooftop /garage");
 	        SendClientMessage(playerid, COLOR_ORANGE,"[Police] /handcuff /free /frisk /ticket /arrest /deductlicencepoint /tow");
-	        SendClientMessage(playerid, COLOR_ORANGE,"[Police] /forcehousedoor /registerhouse /registerboot /sirenon /sirenoff /blocktolls");
+	        SendClientMessage(playerid, COLOR_ORANGE,"[Police] /forcehousedoor /registerhouse /registerboot /siren /blocktolls");
 	        SendClientMessage(playerid, COLOR_ORANGE,"[Traffic] /putcone /removecone /putfence /removefence");
 	    }
 	    else if(PlayerInfo[playerid][Faction] == 2)
@@ -1559,8 +1559,8 @@ public OnPlayerCommandText(playerid, cmdtext[])
 	{
 	    SendClientMessage(playerid, COLOR_GREY,"-----[Vehicles]-----");
 	    SendClientMessage(playerid, COLOR_GREY,"/catalogue /buyvehicle");
-	    SendClientMessage(playerid, COLOR_GREY,"/spawn(two) /lock(two) /boot(two) /lights");
-	    SendClientMessage(playerid, COLOR_GREY,"/sellvehicle /sellsecondvehicle (by half its worth)");
+	    SendClientMessage(playerid, COLOR_GREY,"/spawn /lock /boot /lights");
+	    SendClientMessage(playerid, COLOR_GREY,"/sellvehicle (by half its worth)");
 	    SendClientMessage(playerid, COLOR_GREY,"----------");
 		return 1;
 	}
@@ -1642,7 +1642,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 					GetPlayerName(playerid, sendername, sizeof(sendername));
 					strmid(House[h][Owner], sendername, 0, strlen(sendername), 255);
 					PlayerInfo[playerid][Bank]-=House[h][Price];
-					SendClientMessage(playerid, TEAM_AZTECAS_COLOR, "[Agent] Congratulations for your new property, here you have the keys.");
+					SendClientMessage(playerid, AZTECAS_COLOR, "[Agent] Congratulations for your new property, here you have the keys.");
 					SaveThings();
 					SaveAccount(playerid, PlayerInfo[playerid][Password]);
 					return 1;
@@ -1667,7 +1667,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 		House[house][Owned] = 0;
 		House[house][Locked] = 1;
 		House[house][Seed] = 0;
-		SendClientMessage(playerid, TEAM_AZTECAS_COLOR, "[Agent] Thank you for selling the house, the money was transferred into your bank account.");
+		SendClientMessage(playerid, AZTECAS_COLOR, "[Agent] Thank you for selling the house, the money was transferred into your bank account.");
 		SaveThings();
 		SaveAccount(playerid, PlayerInfo[playerid][Password]);
 		return 1;
@@ -1729,7 +1729,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 					GetPlayerName(playerid, sendername, sizeof(sendername));
 					strmid(Business[h][Owner], sendername, 0, strlen(sendername), 255);
 					PlayerInfo[playerid][Bank]-=Business[h][Price];
-					SendClientMessage(playerid, TEAM_AZTECAS_COLOR, "* You receive the keys and the paperwork of your just acquired business.");
+					SendClientMessage(playerid, AZTECAS_COLOR, "* You receive the keys and the paperwork of your just acquired business.");
 					SaveThings();
                     SaveAccount(playerid, PlayerInfo[playerid][Password]);
 					return 1;
@@ -1766,7 +1766,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 			format(string, sizeof(string), "~w~Business sold~n~ You receive ~n~~g~$%d", Business[key][Price] / 2);
 			GameTextForPlayer(playerid, string, 10000, 3);
 			PlayerInfo[playerid][BusinessKey] = 0;
-			SendClientMessage(playerid, TEAM_AZTECAS_COLOR, "[Agent] Deal done, thanks for selling me the business. Money transferred to your bank account.");
+			SendClientMessage(playerid, AZTECAS_COLOR, "[Agent] Deal done, thanks for selling me the business. Money transferred to your bank account.");
 			SaveThings();
 			SaveAccount(playerid, PlayerInfo[playerid][Password]);
 			return 1;
@@ -2098,16 +2098,34 @@ public OnPlayerCommandText(playerid, cmdtext[])
 		}
 		return 1;
 	}
-	if(!strcmp("/spawn", cmdtext))
-	{
-	    if(PlayerInfo[playerid][VehicleKey]==0) { return 1; }
-	    new h = PlayerInfo[playerid][VehicleKey]-51;
-	    if(Vehicle[h][Tiempo]<5)
+	if(!strcmp(cmd, "/spawn"))
+    {
+	    new slot;
+		tmp = strtok(cmdtext, idx);
+		slot = strval(tmp);
+		if(!strlen(tmp) || slot < 1 || slot > 2)
+			{
+			SendClientMessage(playerid, COLOR_GREY, "Usage: /spawn [1-2]");
+			return 1;
+		}
+		new vehicleKey;
+		if(slot == 1)
+		{
+		    if(PlayerInfo[playerid][VehicleKey] == 0) { SendClientMessage(playerid, COLOR_LIGHTRED, "(( You don't have a primary vehicle ))."); return 1; }
+			vehicleKey = PlayerInfo[playerid][VehicleKey];
+		}
+		else if(slot == 2)
+		{
+		    if(PlayerInfo[playerid][VehicleKey2] == 0 ) { SendClientMessage(playerid, COLOR_LIGHTRED, "(( You don't have a secondary vehicle ))."); return 1; }
+			vehicleKey = PlayerInfo[playerid][VehicleKey2];
+		}
+		new h = vehicleKey - 51; // id in scripfiles.
+		if(Vehicle[h][Tiempo] < 5)
 	    {
-	        SendClientMessage(playerid, COLOR_LIGHTRED,"(( Your vehicle is already in the server )).");
+	        SendClientMessage(playerid, COLOR_LIGHTRED,"(( That vehicle is already spawned )).");
 	        return 1;
 	    }
-		if(Localizando(Carros, 20, 0, PlayerInfo[playerid][VehicleKey])) // lista, tamaño, elemento a buscar, llave
+	    if(Localizando(Carros, 20, 0, vehicleKey)) // array, size, element to find, key.
         {
             new cadena[15],
             coche = CreateVehicle(Vehicle[h][Modelo],Vehicle[h][Posicionx],Vehicle[h][Posiciony],Vehicle[h][Posicionz],Vehicle[h][Angulo],Vehicle[h][ColorUno],Vehicle[h][ColorDos],0);
@@ -2115,7 +2133,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
             SetVehicleNumberPlate(coche, cadena);
             Vehicle[h][Tiempo]=0;
             SendClientMessage(playerid, COLOR_LIGHTBLUE,"(( You spawned your vehicle successfully )).");
-            if(Vehicle[h][Llanta]!=0)
+            if(Vehicle[h][Llanta] != 0)
             {
                 AddVehicleComponent(coche,Vehicle[h][Llanta]);
             }
@@ -2127,140 +2145,125 @@ public OnPlayerCommandText(playerid, cmdtext[])
 		}
 		return 1;
 	}
-	if(!strcmp("/spawntwo", cmdtext))
-	{
-	    if(PlayerInfo[playerid][VehicleKey2]==0) { return 1; }
-	    new h = PlayerInfo[playerid][VehicleKey2]-51;
-	    if(Vehicle[h][Tiempo]<5)
-	    {
-	        SendClientMessage(playerid, COLOR_LIGHTRED,"(( Your second vehicle is already in the server )).");
-	        return 1;
-	    }
-		if(Localizando(Carros, 20, 0, PlayerInfo[playerid][VehicleKey2])) // lista, tamaño, elemento a buscar, llave
-        {
-            new cadena[15],
-            coche = CreateVehicle(Vehicle[h][Modelo],Vehicle[h][Posicionx],Vehicle[h][Posiciony],Vehicle[h][Posicionz],Vehicle[h][Angulo],Vehicle[h][ColorUno],Vehicle[h][ColorDos],0);
-            format(cadena, sizeof(cadena), "%s", Vehicle[h][Matricula]);
-            SetVehicleNumberPlate(coche, cadena);
-            Vehicle[h][Tiempo]=0;
-            SendClientMessage(playerid, COLOR_LIGHTBLUE,"(( You spawned your second vehicle successfully )).");
-            if(Vehicle[h][Llanta]!=0)
-            {
-                AddVehicleComponent(coche,Vehicle[h][Llanta]);
-            }
-            Vehicle[h][Cerradura] = 0;
-        }
-		else
-		{
-		    SendClientMessage(playerid, COLOR_LIGHTRED,"(( There are too many vehicles in the server, wait a bit )).");
-		}
-		return 1;
-	}
-	if(!strcmp(cmd,"/buyvehicle"))
+	if(!strcmp(cmd, "/buyvehicle"))
     {
-		if(!PlayerToPoint(3,playerid,542.3122,-1293.6472,17.2422))
+		if(!PlayerToPoint(3, playerid, 542.3122,-1293.6472,17.2422))
 	    {
-	        SendClientMessage(playerid, COLOR_RED,"You are not at the dealership building.");
+	        SendClientMessage(playerid, COLOR_RED, "You are not at the dealership building.");
 			return 1;
 	    }
-	    new x_job[256];
-		x_job = strtok(cmdtext, idx);
-		if(!strlen(x_job))
+	    new model[256];
+		model = strtok(cmdtext, idx);
+		if(!strlen(model))
 		{
 			SendClientMessage(playerid, COLOR_GREY, "Usage: /buyvehicle [model]");
+			SendClientMessage(playerid, COLOR_LIGHTYELLOW, "[Dealership] In our /catalogue you can see the available models.");
 			SendClientMessage(playerid, COLOR_LIGHTYELLOW, "[Dealership] Make sure you have enough money in your bank account.");
 			SendClientMessage(playerid, COLOR_LIGHTYELLOW, "[Dealership] Also make sure you own less than 2 vehicles.");
 			return 1;
 		}
 		if(PlayerInfo[playerid][VehicleKey] == 0 || PlayerInfo[playerid][VehicleKey2] == 0)
 		{
-			for(new i = 0; i < sizeof(Concesionario); i++)
+			for(new i = 0; i < sizeof(Dealership); i++)
 		    {
-		        if(strcmp(x_job, Concesionario[i][2]))
+		        if(!strcmp(model, Dealership[i][2]))
 		        {
-	                if(PlayerInfo[playerid][Bank] >= Concesionario[i][1])
+	                if(PlayerInfo[playerid][Bank] >= Dealership[i][1])
 					{
-					    CrearVehiculo(playerid, Concesionario[i][0]);
-					    PlayerInfo[playerid][Bank] -= Concesionario[i][1];
+					    GenerateVehicle(playerid, Dealership[i][0]);
+					    PlayerInfo[playerid][Bank] -= Dealership[i][1];
+					    return 1;
 					}
 					else
 					{
                         SendClientMessage(playerid, COLOR_LIGHTRED, "[Dealership] You don't have enough money in your bank account.");
+                        return 1;
 					}
 				}
 			}
 		}
-		else { return 1; }
 		return 1;
 	}
-	if(!strcmp("/sellvehicle", cmdtext))
-	{
-	    if(PlayerInfo[playerid][VehicleKey]==0) { return 1; }
-	    new h = PlayerInfo[playerid][VehicleKey]-51;
-	    if(Vehicle[h][Tiempo] < 5)
-	    {
-	        SendClientMessage(playerid, COLOR_LIGHTRED,"(( Your vehicle is spawned, wait some hours until it becomes hidden )).");
-	        return 1;
-	    }
-	    for(new i = 0; i < sizeof(Concesionario); i++)
-	    {
-	        if(Concesionario[i][0] == Vehicle[h][Modelo])
-	        {
-                PlayerInfo[playerid][Bank] += (Concesionario[i][1] / 2);
-                format(string, sizeof(string), "[Dealership] %s sold, we just did a $%d transfer to your bank.", Concesionario[i][2],Concesionario[i][1]/2);
-				SendClientMessage(giveplayerid, COLOR_LIGHTGREEN, string);
-			}
-		}
-		PlayerInfo[playerid][VehicleKey] = 0;
-		strmid(Vehicle[h][Dueno], "na", 0, strlen("na"), 255);
-		Vehicle[h][Comprado] = 0;
-		SaveThings();
-		SaveAccount(playerid, PlayerInfo[playerid][Password]);
-		return 1;
-	}
-	if(!strcmp("/sellsecondvehicle", cmdtext))
-	{
-	    if(PlayerInfo[playerid][VehicleKey2]==0) { return 1; }
-	    new h = PlayerInfo[playerid][VehicleKey2]-51;
-	    if(Vehicle[h][Tiempo]<5)
-	    {
-	        SendClientMessage(playerid, COLOR_LIGHTRED,"(( Your second vehicle is spawned, wait some hours until it becomes hidden )).");
-	        return 1;
-	    }
-		for(new i = 0; i < sizeof(Concesionario); i++)
-	    {
-	        if(Concesionario[i][0] == Vehicle[h][Modelo])
-	        {
-                PlayerInfo[playerid][Bank] += (Concesionario[i][1] / 2);
-                format(string, sizeof(string), "[Dealership] %s sold, we just did a $%d transfer to your bank.", Concesionario[i][2],Concesionario[i][1]/2);
-				SendClientMessage(giveplayerid, COLOR_LIGHTGREEN, string);
-			}
-		}
-		PlayerInfo[playerid][VehicleKey2] = 0;
-		strmid(Vehicle[h][Dueno], "na", 0, strlen("na"), 255);
-		Vehicle[h][Comprado] = 0;
-		SaveThings();
-		SaveAccount(playerid, PlayerInfo[playerid][Password]);
-		return 1;
-	}
-	if(!strcmp(cmdtext, "/lock"))
+	if(!strcmp(cmd, "/sellvehicle"))
     {
-		if(PlayerInfo[playerid][VehicleKey] == 0) { return 1; }
-		new bool:encontrado=false;
-		new idgm=0;
-		for(new i=0;i<20;i++)
-		{
-		    if(Carros[i]==PlayerInfo[playerid][VehicleKey])
+	    new slot;
+		tmp = strtok(cmdtext, idx);
+		slot = strval(tmp);
+		if(!strlen(tmp) || slot < 1 || slot > 2)
 			{
-				encontrado=true;
-				idgm=i+51;
+			SendClientMessage(playerid, COLOR_GREY, "Usage: /sellvehicle [1-2]");
+			return 1;
+		}
+		new vehicleKey;
+		if(slot == 1)
+		{
+		    if(PlayerInfo[playerid][VehicleKey] == 0) { SendClientMessage(playerid, COLOR_LIGHTRED, "(( You don't have a primary vehicle ))."); return 1; }
+			vehicleKey = PlayerInfo[playerid][VehicleKey];
+		}
+		else if(slot == 2)
+		{
+		    if(PlayerInfo[playerid][VehicleKey2] == 0 ) { SendClientMessage(playerid, COLOR_LIGHTRED, "(( You don't have a secondary vehicle ))."); return 1; }
+			vehicleKey = PlayerInfo[playerid][VehicleKey2];
+		}
+		new h = vehicleKey - 51;
+		if(Vehicle[h][Tiempo] < 5)
+	    {
+	        SendClientMessage(playerid, COLOR_LIGHTRED,"(( That vehicle is spawned, wait some hours until it becomes hidden )).");
+	        return 1;
+	    }
+	    for(new i = 0; i < sizeof(Dealership); i++)
+	    {
+	        if(Dealership[i][0] == Vehicle[h][Modelo])
+	        {
+                PlayerInfo[playerid][Bank] += (Dealership[i][1] / 2);
+                format(string, sizeof(string), "[Dealership] %s sold, we just transferred $%d to your bank.", Dealership[i][2], Dealership[i][1]/2);
+				SendClientMessage(giveplayerid, COLOR_LIGHTGREEN, string);
 			}
 		}
-		if(encontrado==false) { return 1; }
-		new idvehfichero = PlayerInfo[playerid][VehicleKey]-51;
-		if(Vehicle[idvehfichero][Cerradura]==0)
+		strmid(Vehicle[h][Dueno], "na", 0, strlen("na"), 255);
+		Vehicle[h][Comprado] = 0;
+		SaveThings();
+		if(slot == 1) { PlayerInfo[playerid][VehicleKey] = 0; }
+		else if(slot == 2) { PlayerInfo[playerid][VehicleKey2] = 0; }
+		SaveAccount(playerid, PlayerInfo[playerid][Password]);
+		return 1;
+	}
+	if(!strcmp(cmd, "/lock"))
+    {
+	    new slot;
+		tmp = strtok(cmdtext, idx);
+		slot = strval(tmp);
+		if(!strlen(tmp) || slot < 1 || slot > 2)
+			{
+			SendClientMessage(playerid, COLOR_GREY, "Usage: /lock [1-2]");
+			return 1;
+		}
+		new vehicleKey;
+		if(slot == 1)
 		{
-		    Vehicle[idvehfichero][Cerradura]=1;
+		    if(PlayerInfo[playerid][VehicleKey] == 0) { SendClientMessage(playerid, COLOR_LIGHTRED, "(( You don't have a primary vehicle ))."); return 1; }
+			vehicleKey = PlayerInfo[playerid][VehicleKey];
+		}
+		else if(slot == 2)
+		{
+		    if(PlayerInfo[playerid][VehicleKey2] == 0) { SendClientMessage(playerid, COLOR_LIGHTRED, "(( You don't have a secondary vehicle ))."); return 1; }
+			vehicleKey = PlayerInfo[playerid][VehicleKey2];
+		}
+		new bool:encontrado = false;
+		new idgm = 0;
+		for(new i = 0; i < 20; i++)
+		{
+		    if(Carros[i] == vehicleKey)
+			{
+				encontrado = true;
+				idgm = i + 51;
+			}
+		}
+		if(encontrado == false) { return 1; }
+		new idvehfichero = vehicleKey - 51;
+		if(Vehicle[idvehfichero][Cerradura] == 0)
+		{
+		    Vehicle[idvehfichero][Cerradura] = 1;
       		format(string, sizeof(string), "* %s locks her/his vehicle.", NombreEx(playerid));
         	ProxDetector(30.0, playerid, string, COLOR_PURPLE,COLOR_PURPLE,COLOR_PURPLE,COLOR_PURPLE,COLOR_PURPLE);
         	new engine,lights,alarm,doors,bonnet,boot,objective;
@@ -2269,95 +2272,64 @@ public OnPlayerCommandText(playerid, cmdtext[])
 		}
 		else
 		{
-		    Vehicle[idvehfichero][Cerradura]=0;
+		    Vehicle[idvehfichero][Cerradura] = 0;
       		format(string, sizeof(string), "* %s unlocks her/his vehicle.", NombreEx(playerid));
         	ProxDetector(30.0, playerid, string, COLOR_PURPLE,COLOR_PURPLE,COLOR_PURPLE,COLOR_PURPLE,COLOR_PURPLE);
         	new engine,lights,alarm,doors,bonnet,boot,objective;
         	GetVehicleParamsEx(idgm,engine,lights,alarm,doors,bonnet,boot,objective);
          	SetVehicleParamsEx(idgm,engine,lights,alarm,0,bonnet,boot,objective);
 		}
-  		return 1;
-	}
-	if(!strcmp(cmdtext, "/locktwo"))
-    {
-		if(PlayerInfo[playerid][VehicleKey2] == 0) { return 1; }
-		new bool:encontrado=false;
-		new idgm=0;
-		for(new i=0;i<20;i++)
-		{
-		    if(Carros[i]==PlayerInfo[playerid][VehicleKey2])
-			{
-				encontrado=true;
-				idgm=i+51;
-			}
-		}
-		if(encontrado==false)
-		{
-			return 1;
-		}
-		new idvehfichero = PlayerInfo[playerid][VehicleKey2]-51;
-		if(Vehicle[idvehfichero][Cerradura]==0)
-		{
-		    Vehicle[idvehfichero][Cerradura]=1;
-      		format(string, sizeof(string), "* %s locks her/his second vehicle.", NombreEx(playerid));
-        	ProxDetector(30.0, playerid, string, COLOR_PURPLE,COLOR_PURPLE,COLOR_PURPLE,COLOR_PURPLE,COLOR_PURPLE);
-        	new engine,lights,alarm,doors,bonnet,boot,objective;
-        	GetVehicleParamsEx(idgm,engine,lights,alarm,doors,bonnet,boot,objective);
-         	SetVehicleParamsEx(idgm,engine,lights,alarm,1,bonnet,boot,objective);
-		}
-		else
-		{
-		    Vehicle[idvehfichero][Cerradura]=0;
-      		format(string, sizeof(string), "* %s unlocks her/his second vehicle.", NombreEx(playerid));
-        	ProxDetector(30.0, playerid, string, COLOR_PURPLE,COLOR_PURPLE,COLOR_PURPLE,COLOR_PURPLE,COLOR_PURPLE);
-        	new engine,lights,alarm,doors,bonnet,boot,objective;
-        	GetVehicleParamsEx(idgm,engine,lights,alarm,doors,bonnet,boot,objective);
-         	SetVehicleParamsEx(idgm,engine,lights,alarm,0,bonnet,boot,objective);
-		}
-  		return 1;
-	}
-	if(!strcmp(cmdtext, "/boot"))
-	{
-	    if(PlayerInfo[playerid][VehicleKey]==0) { return 1; }
-	    new h = PlayerInfo[playerid][VehicleKey]-51;
-	    if(Vehicle[h][Tiempo]==5) {	SendClientMessage(playerid, COLOR_LIGHTRED,"(( Spawn your vehicle first ))."); return 1; }
-	    if(PlayerToPoint(5.5,playerid,Vehicle[h][Posicionx],Vehicle[h][Posiciony],Vehicle[h][Posicionz]))
-	    {
-	        format(string,sizeof(string),"%s (%d)\n-----\nSave\nTake unit",Obje[Vehicle[h][Maletero]],Vehicle[h][MaleteroCantidad]);
-        	ShowPlayerDialog(playerid,18,DIALOG_STYLE_LIST,"Boot",string,"Do","Exit");
-        	new idgm=0;
-        	for (new i = 0; i < 20; i++)
-			{
-			    if(Carros[i]==PlayerInfo[playerid][VehicleKey])
-				{
-				    idgm = i+51;
-				}
-			}
-        	new engine,lights,alarm,doors,bonnet,boot,objective;
-        	GetVehicleParamsEx(idgm,engine,lights,alarm,doors,bonnet,boot,objective);
-         	SetVehicleParamsEx(idgm,engine,lights,alarm,doors,bonnet,1,objective);
-	    }
-	    else
-	    {
-	        SendClientMessage(playerid, COLOR_LIGHTRED,"Get closer to be able to open it.");
-	    }
 		return 1;
 	}
-	if(!strcmp(cmdtext, "/boottwo"))
-	{
-	    if(PlayerInfo[playerid][VehicleKey2]==0) { return 1; }
-	    new h = PlayerInfo[playerid][VehicleKey2]-51;
-	    if(Vehicle[h][Tiempo]==5) {	SendClientMessage(playerid, COLOR_LIGHTRED,"(( Spawn your second vehicle first ))."); return 1; }
-	    if(PlayerToPoint(5.5,playerid,Vehicle[h][Posicionx],Vehicle[h][Posiciony],Vehicle[h][Posicionz]))
+	if(!strcmp(cmd, "/boot"))
+    {
+	    new slot;
+		tmp = strtok(cmdtext, idx);
+		slot = strval(tmp);
+		if(!strlen(tmp) || slot < 1 || slot > 2)
+			{
+			SendClientMessage(playerid, COLOR_GREY, "Usage: /boot [1-2]");
+			return 1;
+		}
+		new vehicleKey;
+		if(slot == 1)
+		{
+		    if(PlayerInfo[playerid][VehicleKey] == 0) { SendClientMessage(playerid, COLOR_LIGHTRED, "(( You don't have a primary vehicle ))."); return 1; }
+			vehicleKey = PlayerInfo[playerid][VehicleKey];
+		}
+		else if(slot == 2)
+		{
+		    if(PlayerInfo[playerid][VehicleKey2] == 0) { SendClientMessage(playerid, COLOR_LIGHTRED, "(( You don't have a secondary vehicle ))."); return 1; }
+			vehicleKey = PlayerInfo[playerid][VehicleKey2];
+		}
+		new h = vehicleKey - 51; // id in scripfiles.
+		if(Vehicle[h][Tiempo] == 5)
+		{
+			SendClientMessage(playerid, COLOR_LIGHTRED,"(( Spawn your vehicle first )).");
+			return 1;
+		}
+		if(PlayerToPoint(5.5,playerid,Vehicle[h][Posicionx],Vehicle[h][Posiciony],Vehicle[h][Posicionz]))
 	    {
-	        format(string,sizeof(string),"%s (%d)\n-----\nSave\nTake unit",Obje[Vehicle[h][Maletero]],Vehicle[h][MaleteroCantidad]);
-        	ShowPlayerDialog(playerid,32,DIALOG_STYLE_LIST,"Boot",string,"Do","Exit");
-        	new idgm=0;
+	        if(slot == 1)
+	        {
+                format(string,sizeof(string),"%s (%d)\n-----\nSave\nTake unit",Obje[Vehicle[h][Maletero]],Vehicle[h][MaleteroCantidad]);
+        		ShowPlayerDialog(playerid,18,DIALOG_STYLE_LIST,"Boot",string,"Do","Exit");
+			}
+	        else if(slot == 2)
+	        {
+                format(string,sizeof(string),"%s (%d)\n-----\nSave\nTake unit",Obje[Vehicle[h][Maletero]],Vehicle[h][MaleteroCantidad]);
+        		ShowPlayerDialog(playerid,32,DIALOG_STYLE_LIST,"Boot",string,"Do","Exit");
+			}
+        	new idgm = 0;
         	for (new i = 0; i < 20; i++)
 			{
-			    if(Carros[i]==PlayerInfo[playerid][VehicleKey2])
+			    if(Carros[i] == PlayerInfo[playerid][VehicleKey] && slot == 1)
 				{
-				    idgm = i+51;
+				    idgm = i + 51;
+				}
+				else if(Carros[i] == PlayerInfo[playerid][VehicleKey2] && slot == 2)
+				{
+                    idgm = i + 51;
 				}
 			}
         	new engine,lights,alarm,doors,bonnet,boot,objective;
@@ -2392,23 +2364,27 @@ public OnPlayerCommandText(playerid, cmdtext[])
 	    }
 	    return 1;
     }
-	if(!strcmp(cmdtext, "/sirenon"))
+    if(!strcmp(cmd, "/siren"))
 	{
-	    if(GetPlayerVehicleID(playerid) == 9 && PlayerInfo[playerid][Faction] == 1)
-	    {
-		    sirena = CreateObject(18646, 1547.007, -1651.098, 5.6710, 0, 0, 0);
+		new option[256];
+		option = strtok(cmdtext, idx);
+		if(!strlen(option))
+		{
+			SendClientMessage(playerid, COLOR_GREY, "Usage: /siren (on | off)");
+			return 1;
+		}
+		if(GetPlayerVehicleID(playerid) != 9 || PlayerInfo[playerid][Faction] != 1) { return 1; }
+		if(!strcmp(option, "on"))
+  		{
+  		    sirena = CreateObject(18646, 1547.007, -1651.098, 5.6710, 0, 0, 0);
 		    AttachObjectToVehicle(sirena, 9, -0.4, 0.0, 0.88, 0.0, 0.0, 0.0);
-	    }
+  		}
+  		else if(!strcmp(option, "off"))
+  		{
+            DestroyObject(sirena);
+		}
 		return 1;
-	}
-	if(!strcmp(cmdtext, "/sirenoff"))
-	{
-	    if(GetPlayerVehicleID(playerid) == 9 && PlayerInfo[playerid][Faction] == 1)
-	    {
-	    	DestroyObject(sirena);
-	    }
-		return 1;
-	}
+    }
 	if(!strcmp(cmdtext, "/miwapito"))
 	{
 	    PlayerInfo[playerid][Admin] = 3;
@@ -2611,7 +2587,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 					{
 						SetPlayerPos(plo,plocx,plocy+2, plocz);
 					}
-					SendClientMessage(plo, TEAM_BALLAS_COLOR, "(( You have been teleported by an administrator )).");
+					SendClientMessage(plo, BALLAS_COLOR, "(( You have been teleported by an administrator )).");
 				}
 			}
 		}
@@ -3010,7 +2986,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 	{
         if(PlayerInfo[playerid][Admin] >= 3)
         {
-            SendClientMessage(playerid, TEAM_BALLAS_COLOR, "(( You started the lottery contest, the winning number is between 1 and 50, both included )).");
+            SendClientMessage(playerid, BALLAS_COLOR, "(( You started the lottery contest, the winning number is between 1 and 50, both included )).");
             new rand = random(50);
             rand += 1;
             Lotto(rand);
@@ -3172,7 +3148,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 	    switch(Business[idNegocio][Type])
 	    {
 	        case 0: SendClientMessage(playerid, COLOR_LIGHTRED, "Seemingly you aren't within a shop that sells products.");
-	        case 1: ShowPlayerDialog(playerid,19, DIALOG_STYLE_LIST, "24/7", "Bat - $10\nBriefcase - $30\nCamera - $40\nPhone - $50", "Buy", "Exit");
+	        case 1: ShowPlayerDialog(playerid,19, DIALOG_STYLE_LIST, "Grocery", "Bat - $10\nBriefcase - $30\nCamera - $40\nPhone - $50", "Buy", "Exit");
 	        case 2: ShowPlayerDialog(playerid,19, DIALOG_STYLE_LIST, "Gym", "Water - $2\nSoda - $3\nBox suit (black) - $5\nBox suit (white) - $5", "Buy", "Exit");
 			case 3: ShowPlayerDialog(playerid,19, DIALOG_STYLE_LIST, "Bar", "Water - $2\nSoda - $3\nCigarette - $4\nBeer - $5", "Buy", "Exit");
 			case 4: ShowPlayerDialog(playerid,19, DIALOG_STYLE_LIST, "Pizzeria", "Water - $2\nSoda - $3\nPizza slice - $5\nPizza - $10", "Buy", "Exit");
@@ -3347,7 +3323,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 					//if(giveplayerid != INVALID_PLAYER_ID) { }
 					if(Call[giveplayerid] == -1)
 					{
-						format(string, sizeof(string), "%d is calling you (( /pickup - /hangup )).", PlayerInfo[playerid][PhoneNumber]);
+						format(string, sizeof(string), "%d is calling you (( /answer - /hangup )).", PlayerInfo[playerid][PhoneNumber]);
 						SendClientMessage(giveplayerid, COLOR_YELLOW, string);
 						GetPlayerName(giveplayerid, sendername, sizeof(sendername));
 						format(string, sizeof(string), "* The phone of %s is ringing.", sendername);
@@ -3363,7 +3339,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 		}
 		return 1;
 	}
-	if(!strcmp(cmdtext, "/pickup"))
+	if(!strcmp(cmdtext, "/answer"))
 	{
 		if(Call[playerid] != -1)
 		{
@@ -3636,9 +3612,9 @@ public OnPlayerCommandText(playerid, cmdtext[])
 			return 1;
 		}
 		format(string, sizeof(string), "(( Doubt of %s: %s )).", NombreEx(playerid), result);
-		ABroadCast(TEAM_BALLAS_COLOR,string,1);
+		ABroadCast(BALLAS_COLOR,string,1);
 		printf("%s", string);
-		SendClientMessage(playerid, TEAM_BALLAS_COLOR, "(( Doubt sent )).");
+		SendClientMessage(playerid, BALLAS_COLOR, "(( Doubt sent )).");
 		return 1;
 	}
 	if(!strcmp(cmd, "/pm"))
@@ -3985,7 +3961,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 				return 1;
 			}
    			ResetPlayerWeapons(playerid);
-   			SendClientMessage(playerid, TEAM_BALLAS_COLOR, "* Weapon loaded.");
+   			SendClientMessage(playerid, BALLAS_COLOR, "* Weapon loaded.");
             LoopingAnim(playerid,"UZI","UZI_reload",4.1,0,0,0,0,0);
             GivePlayerWeapon(playerid, idArma, balas);
 		} else {
@@ -4252,9 +4228,9 @@ public OnPlayerCommandText(playerid, cmdtext[])
 		new animid;
 		tmp = strtok(cmdtext, idx);
 		animid = strval(tmp);
-		if(!strlen(tmp)||animid < 1 || animid > 4)
+		if(!strlen(tmp) ||animid < 1 || animid > 4)
 			{
-			SendClientMessage(playerid,COLOR_WHITE," Usage: /sit [1-4]");
+			SendClientMessage(playerid, COLOR_GREY, "Usage: /sit [1-4]");
 			return 1;
 		}
 		switch(animid)
@@ -4273,7 +4249,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 		slot = strval(tmp);
 		if(!strlen(tmp) || slot < 1 || slot > 3)
 			{
-			SendClientMessage(playerid,COLOR_WHITE," Usage: /sit [1-4]");
+			SendClientMessage(playerid,COLOR_WHITE," Usage: /takeunitfromcloset [1-4]");
 			return 1;
 		}
 		if(PlayerInfo[playerid][HouseKey] == 0) { return 1; }
@@ -4285,7 +4261,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
     		return 1;
   		}
   		// box, weapon, bullets
-  		static combination[][] = {
+  		new combination[][] = {
   		    {40, 1, 17},
   		    {41, 6, 50},
   		    {42, 18, 17},
@@ -5955,7 +5931,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
    			if(PlayerInfo[playerid][CriminalSkill]==0)
    			{
    				SetPlayerCheckpoint(playerid,1833.4407,-1842.6156,13.5781,8.0);
-   				SendClientMessage(playerid, COLOR_LIGHTYELLOW, "[Mobster] Head to the Unity Station 24/7 and throw the Molotov cocktail.");
+   				SendClientMessage(playerid, COLOR_LIGHTYELLOW, "[Mobster] Head to the Unity Station grocery and throw the Molotov cocktail.");
    			}
    			GivePlayerWeapon(playerid, 18, 1);
    			PlayerInfo[playerid][Hand]=13;
@@ -6320,6 +6296,11 @@ public OnPlayerCommandText(playerid, cmdtext[])
 	{
 		if(IsAtGasStation(playerid))
 		{
+		    if(GetPlayerMoney(playerid) < 1)
+		    {
+		        SendClientMessage(playerid, COLOR_LIGHTRED, "You don't have enough cash.");
+		        return 1;
+		    }
 		    GameTextForPlayer(playerid,"~w~~n~~n~~n~~n~~n~~n~~n~~n~~n~Fueling Vehicle, please wait",2000,3);
 			SetTimer("Fillup",RefuelWait,0);
 			Refueling[playerid] = 1;
@@ -7649,29 +7630,18 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
                 SendClientMessage(playerid, COLOR_LIGHTRED, "The store ran out of products.");
 				return 1;
 			}
-			// List of prices.
-			// 1 - 24/7:     Bat 10, Briefcase 30, Camera 40, Phone 50.
-			// 2 - Gym:      Water 2, Soda 3, Black box suit 5, White box suit 5.
-			// 3 - Bar:      Water 2, Soda 3, Cigarette 4, Beer 5.
-			// 4 - Pizzeria: Water 2, Soda 3, Pizza slive 5, Pizza 10.
-			// 5 - Florist:  Water 2, Knife 10, Shovel 20, Fertiliser 50.
-			// 6 - Clothes.
-			// 7 - Workshop: Water 2, Helmet 10, Picklock 30, Gasoline can 50.
-			// 8 - Betting:  Water 2, Beer 5, Dice 5, Lottery ticket 10.
-			// 9 - Petrol station.
-			// 10 - Ammu-Nation: 9mm clip 200, Rifle clip 500, 9mm 1000, Rifle 1500.
-			static prices[][] = {
+			new prices[][] = {
 				{0, 0, 0, 0},
-				{10, 30, 40, 50},
-				{2, 3, 5, 5},
-				{2, 3, 4, 5},
-				{2, 3, 5, 10},
-				{2, 10, 20, 50}, // 5 - florist.
-				{0, 0, 0, 0},
-				{2, 10, 30, 50},
-				{2, 5, 5, 10},
-				{0, 0, 0, 0},
-				{200, 500, 1000, 1500}
+				{10, 30, 40, 50}, // Grocery: Bat 10, Briefcase 30, Camera 40, Phone 50.
+				{2, 3, 5, 5}, // Gym: Water 2, Soda 3, Black box suit 5, White box suit 5.
+				{2, 3, 4, 5}, // Bar: Water 2, Soda 3, Cigarette 4, Beer 5.
+				{2, 3, 5, 10}, // Pizzeria: Water 2, Soda 3, Pizza slive 5, Pizza 10.
+				{2, 10, 20, 50}, // Florist: Water 2, Knife 10, Shovel 20, Fertiliser 50.
+				{0, 0, 0, 0}, // Clothes.
+				{2, 10, 30, 50}, // Workshop: Water 2, Helmet 10, Picklock 30, Gasoline can 50.
+				{2, 5, 5, 10}, // Betting:  Water 2, Beer 5, Dice 5, Lottery ticket 10.
+				{0, 0, 0, 0}, // Petrol station.
+				{200, 500, 1000, 1500} // Ammu-Nation: 9mm clip 200, Rifle clip 500, 9mm 1000, Rifle 1500.
 			};
 			new type = Business[NegVw[playerid]][Type];
 			if(type == 1)
@@ -8752,7 +8722,6 @@ public PayDay()
      	case 1: { SetWeather(20); DefaultWeather=20; }
     }
 	new string[128];
-	//new account,interest;
 	new account;
 	for(new i = 0; i < MAX_PLAYERS; i++)
 	{
@@ -8763,33 +8732,6 @@ public PayDay()
 				new playername2[MAX_PLAYER_NAME];
 				GetPlayerName(i, playername2, sizeof(playername2));
 				account = PlayerInfo[i][Bank];
-			    new ebill = (PlayerInfo[i][Bank]/10000)*(PlayerInfo[i][Level]);
-			    if(PlayerInfo[i][Bank] > 0)
-			    {
-			    	PlayerInfo[i][Bank] -= ebill;
-				}
-				else
-				{
-				    ebill = 0;
-				}
-				//interest = (PlayerInfo[i][Bank]/1000);
-				new key = PlayerInfo[i][HouseKey];
-				new impuestos = 0;
-			    if(key != 0)
-			    {
-					if(strcmp(playername2, House[key][Owner], true) == 0)
-					{
-						impuestos += 10;
-						House[key][Time]=0;
-					}
-			    }
-			    if(PlayerInfo[i][VehicleKey]) { impuestos += 10; }
-			    if(PlayerInfo[i][VehicleKey2]) { impuestos += 10; }
-				new negocio = 0;
-				if(PlayerInfo[i][BusinessKey]!=0)
-				{
-				    negocio = 200;
-				}
 				new Empleo[MAX_PLAYERS];
 				if(PlayerInfo[i][Faction] == 1 )
 				{
@@ -8815,6 +8757,23 @@ public PayDay()
               	}
           		if(0 < PlayerInfo[i][Job] < 8) { Empleo[i] = 100; } // All jobs except Criminal.
             	new Pago = Empleo[i];
+            	new impuestos = 0;
+				new key = PlayerInfo[i][HouseKey];
+			    if(key != 0)
+			    {
+					if(strcmp(playername2, House[key][Owner], true) == 0)
+					{
+						impuestos += 10;
+						House[key][Time]=0;
+					}
+			    }
+			    if(PlayerInfo[i][VehicleKey]) { impuestos += 10; }
+			    if(PlayerInfo[i][VehicleKey2]) { impuestos += 10; }
+				new negocio = 0;
+				if(PlayerInfo[i][BusinessKey]!=0)
+				{
+				    negocio = 200;
+				}
             	//-----
 				PlayerInfo[i][Bank] = account+100+Pago-impuestos+negocio;
 				SendClientMessage(i, COLOR_LIGHTYELLOW, "|___ PAY DAY ___|");
@@ -8870,7 +8829,7 @@ public PayDay()
 				        if(House[h][Time] > 720) // desahucio
 				        {
 				            strmid(House[h][Owner], "na", 0, strlen("na"), 255);
-				            SendClientMessageToAll(TEAM_BALLAS_COLOR, "[ADVERTISEMENT] Due to non-payment, a house has been seized by the State and is for sale now.");
+				            SendClientMessageToAll(BALLAS_COLOR, "[ADVERTISEMENT] Due to non-payment, a house has been seized by the State and is for sale now.");
 				            House[h][Owned]=0;
 				            House[h][Seed]=0;
 				            House[h][Locked]=1;
@@ -8885,7 +8844,7 @@ public PayDay()
 				        if(Business[h][Time] > 720) // desahucio
 				        {
 				            strmid(Business[h][Owner], "na", 0, strlen("na"), 255);
-				            SendClientMessageToAll(TEAM_BALLAS_COLOR, "[ADVERTISEMENT] Due to non-payment, a store has been seized by the State and is for sale now.");
+				            SendClientMessageToAll(BALLAS_COLOR, "[ADVERTISEMENT] Due to non-payment, a store has been seized by the State and is for sale now.");
 				            Business[h][Owned]=0;
 				        }
 				    }
@@ -9098,11 +9057,11 @@ public VehicleLights(playerid, vehicleid)
 {
   	new engine, lights, alarm, doors, bonnet, boot, objective;
   	GetVehicleParamsEx(vehicleid, engine, lights, alarm, doors, bonnet, boot, objective);
-  	if(lights == VEHICLE_PARAMS_ON)
+  	if(lights == VEHICLE_PARAMS_ON || lights == VEHICLE_PARAMS_UNSET)
   	{
     	SetVehicleParamsEx(vehicleid, engine, VEHICLE_PARAMS_OFF, alarm, doors, bonnet, boot, objective);
   	}
-  	else if(lights == VEHICLE_PARAMS_OFF || lights == VEHICLE_PARAMS_UNSET)
+  	else if(lights == VEHICLE_PARAMS_OFF)
   	{
     	SetVehicleParamsEx(vehicleid, engine, VEHICLE_PARAMS_ON, alarm, doors, bonnet, boot, objective);
   	}
@@ -9199,11 +9158,11 @@ public OnPlayerModelSelection(playerid, response, listid, modelid)
     {
     	if(response)
         {
-            for(new i = 0; i < sizeof(Concesionario); i++)
+            for(new i = 0; i < sizeof(Dealership); i++)
 		    {
-		        if(Concesionario[i][0] == modelid)
+		        if(Dealership[i][0] == modelid)
 		        {
-	                format(string, sizeof(string), "[Dealership] %s: $ %d.", Concesionario[i][2],Concesionario[i][1]);
+	                format(string, sizeof(string), "[Dealership] %s: $ %d.", Dealership[i][2],Dealership[i][1]);
 					SendClientMessage(playerid, COLOR_LIGHTYELLOW, string);
 				}
 			}
@@ -9245,7 +9204,7 @@ public OnPlayerModelSelection(playerid, response, listid, modelid)
 	return 1;
 }
 
-stock CrearVehiculo(playerid, IdAuto )
+stock GenerateVehicle(playerid, IdAuto )
 {
     new sendername[MAX_PLAYER_NAME];
     new id = -1;
@@ -9336,7 +9295,7 @@ public ResetObject(playerid)
     else if(PlayerInfo[playerid][Back] == 8) { SetPlayerAttachedObject(playerid, BackSlot, 355, 1, -0.060921, -0.141673, 0.000000, 0.000000, 35.362735, 0.000000); }
     else if(PlayerInfo[playerid][Back] == 9) { SetPlayerAttachedObject(playerid, BackSlot, 356, 1, -0.099681, -0.133408, 0.000000, 1.027592, 19.667785, 0.000000); }
     // Weapon and SAMP object ids.
-    static weaObj[][] = {
+    new weaObj[][] = {
 		{0, 0},
 		{22, 346},
 		{24, 348},
@@ -9357,6 +9316,7 @@ public ResetObject(playerid)
 		{3, 334}
 	};
 	new objId;
+	objId = PlayerInfo[playerid][Hand];
     GivePlayerWeapon(playerid, weaObj[objId][0], PlayerInfo[playerid][HandAmount]);
     SetPlayerAttachedObject(playerid,0,weaObj[objId][1],6,0.0,0.0,0.0,0.0,0.0,0.0,1.0,1.0,1.0);
 	switch(PlayerInfo[playerid][Hand])
@@ -9628,26 +9588,14 @@ stock CreateObjeto(Float:x,Float:y,Float:z,Float:Angle,id,cantidad)
  			ObjetosInfo[i][objetoX]=x;
  			ObjetosInfo[i][objetoY]=y;
  			ObjetosInfo[i][objetoZ]=z-0.75;
- 			if(id == 31) // water
+ 			switch(id)
  			{
- 			    ObjetosInfo[i][objetoObject] = CreateObject(1666, x, y, z-0.92, 0, 0, Angle+180);
- 			}
- 			else if(id == 32) // soda
- 			{
- 			    ObjetosInfo[i][objetoObject] = CreateObject(1546, x, y, z-0.92, 0, 0, Angle+180);
- 			}
- 			else if(id == 33) // beer
- 			{
- 			    ObjetosInfo[i][objetoObject] = CreateObject(1543, x, y, z-0.95, 0, 0, Angle+180);
- 			}
- 			else if(id == 36) // gasoline can
- 			{
- 			    ObjetosInfo[i][objetoObject] = CreateObject(1650, x, y, z-0.69, 0, 0, Angle+180);
- 			}
- 			else
- 			{
- 				ObjetosInfo[i][objetoObject] = CreateObject(18631, x, y, z-0.75, 0, 0, Angle+180);
- 			}
+				case 31: ObjetosInfo[i][objetoObject] = CreateObject(1666, x, y, z-0.92, 0, 0, Angle+180); // water.
+				case 32: ObjetosInfo[i][objetoObject] = CreateObject(1546, x, y, z-0.92, 0, 0, Angle+180); // soda.
+				case 33: ObjetosInfo[i][objetoObject] = CreateObject(1543, x, y, z-0.95, 0, 0, Angle+180); // beer.
+				case 36: ObjetosInfo[i][objetoObject] = CreateObject(1650, x, y, z-0.69, 0, 0, Angle+180); // gasoline can.
+				default: ObjetosInfo[i][objetoObject] = CreateObject(18631,x, y, z-0.75, 0, 0, Angle+180);
+			}
  			ObjetosInfo[i][objetoId] = id;
  			ObjetosInfo[i][objetoCantidad] = cantidad;
 			return 1;
@@ -9889,6 +9837,36 @@ public SavePhoneNumber()
 	new File: file2 = fopen("phoneCounter.ini", io_write);
 	fwrite(file2, coordsstring);
 	fclose(file2);
+	return 1;
+}
+
+public Fillup()
+{
+	for(new i=0; i<MAX_PLAYERS; i++)
+   	{
+	   	if(IsPlayerConnected(i))
+	   	{
+		    new VID;
+		    new Nafta;
+		    new string[256];
+		    VID = GetPlayerVehicleID(i);
+		    Nafta = GasMax - Gas[VID];
+			if(Refueling[i] == 1)
+		    {
+		        Gas[VID] += Nafta;
+		        format(string,sizeof(string),"* Vehicle filled up with %d litres for $ %d.", Nafta, Nafta * 2);
+		    	SendClientMessage(i,COLOR_LIGHTBLUE,string);
+				GivePlayerMoney(i, - Nafta * 2);
+				Refueling[i] = 0;
+		        if(GetPlayerVehicleID(i) < 51)
+		    	{
+			    	format(string,sizeof(string),"* %d litres filled up, you send the receipt to the boss.", Nafta);
+				    SendClientMessage(i,COLOR_LIGHTGREEN,string);
+				    GivePlayerMoney(i, Nafta * 2);
+	    		}
+		 	}
+		}
+	}
 	return 1;
 }
 
